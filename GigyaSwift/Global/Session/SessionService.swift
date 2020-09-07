@@ -315,12 +315,14 @@ class SessionService: SessionServiceProtocol {
     }
 
     private func clearCookies() {
-        HTTPCookieStorage.shared.removeCookies(since: .distantPast)
+        DispatchQueue.main.async {
+            HTTPCookieStorage.shared.removeCookies(since: .distantPast)
 
-        WKWebsiteDataStore.default().fetchDataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes()) { records in
-            records.forEach { record in
-                WKWebsiteDataStore.default().removeData(ofTypes: record.dataTypes, for: [record], completionHandler: {})
-                GigyaLogger.log(with: self, message: "Cookie ::: \(record) deleted")
+            WKWebsiteDataStore.default().fetchDataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes()) { records in
+                records.forEach { record in
+                    WKWebsiteDataStore.default().removeData(ofTypes: record.dataTypes, for: [record], completionHandler: {})
+                    GigyaLogger.log(with: self, message: "Cookie ::: \(record) deleted")
+                }
             }
         }
     }
