@@ -16,7 +16,7 @@ final class GigyaIOCContainer<T: GigyaAccountProtocol>: GigyaContainerProtocol {
     var container: IOCContainer
 
     init() {
-        self.container = IOCContainer()
+        container = IOCContainer()
 
         registerDependencies()
     }
@@ -24,24 +24,23 @@ final class GigyaIOCContainer<T: GigyaAccountProtocol>: GigyaContainerProtocol {
     private func registerDependencies() {
         container.register(service: GigyaConfig.self, isSingleton: true) { _ in GigyaConfig() }
 
-        container.register(service: GeneralUtils.self) { resolver in
-            return GeneralUtils()
+        container.register(service: GeneralUtils.self) { _ in
+            GeneralUtils()
         }
 
-        container.register(service: UserNotificationCenterProtocol.self) { resolver in
-            return UserNotificationCenterHelper()
+        container.register(service: UserNotificationCenterProtocol.self) { _ in
+            UserNotificationCenterHelper()
         }
 
         container.register(service: SessionVerificationServiceProtocol.self) { resolver in
             let config = resolver.resolve(GigyaConfig.self)
             let sessionService = resolver.resolve(SessionServiceProtocol.self)
             let apiService = resolver.resolve(ApiServiceProtocol.self)
-            let busnessApi = resolver.resolve(BusinessApiService.self)
 
             return SessionVerificationService(config: config!,
                                               apiService: apiService!,
                                               sessionService: sessionService!,
-                                              businessApi: busnessApi!)
+                                              businessApi: nil)
         }
 
         container.register(service: PushNotificationsServiceProtocol.self, isSingleton: true) { resolver in
@@ -57,16 +56,15 @@ final class GigyaIOCContainer<T: GigyaAccountProtocol>: GigyaContainerProtocol {
                                             biometricService: biometricService!,
                                             generalUtils: generalUtils!,
                                             persistenceService: persistenceService!,
-                                            userNotificationCenter: userNotificationCenter!
-            )
+                                            userNotificationCenter: userNotificationCenter!)
         }
 
         container.register(service: PushNotificationsServiceExternalProtocol.self) { resolver in
-            return resolver.resolve(PushNotificationsServiceProtocol.self) as! PushNotificationsServiceExternalProtocol
+            resolver.resolve(PushNotificationsServiceProtocol.self) as! PushNotificationsServiceExternalProtocol
         }
 
-        container.register(service: NetworkBlockingQueueUtils.self) { resolver in
-            return NetworkBlockingQueueUtils()
+        container.register(service: NetworkBlockingQueueUtils.self) { _ in
+            NetworkBlockingQueueUtils()
         }
 
         container.register(service: NetworkProvider.self) { resolver in
@@ -137,31 +135,34 @@ final class GigyaIOCContainer<T: GigyaAccountProtocol>: GigyaContainerProtocol {
             let interruptionsHandler = resolver.resolve(InterruptionResolverFactoryProtocol.self)
             let biometricService = resolver.resolve(BiometricServiceInternalProtocol.self)
             let persistenceService = resolver.resolve(PersistenceService.self)
+            let sessionVerificationService = resolver.resolve(SessionVerificationServiceProtocol.self)
 
-            return BusinessApiService(config: config!,
-                                      persistenceService: persistenceService!,
-                                      apiService: apiService!,
-                                      sessionService: sessionService!,
-                                      accountService: accountService!,
-                                      providerFactory: providerFactory!,
-                                      interruptionsHandler: interruptionsHandler!,
-                                      biometricService: biometricService!)
+            let businessApi = BusinessApiService(config: config!,
+                                                 persistenceService: persistenceService!,
+                                                 apiService: apiService!,
+                                                 sessionService: sessionService!,
+                                                 accountService: accountService!,
+                                                 providerFactory: providerFactory!,
+                                                 interruptionsHandler: interruptionsHandler!,
+                                                 biometricService: biometricService!)
+            sessionVerificationService?.setBusinessApi(businessApi: businessApi)
+            return businessApi
         }
 
         container.register(service: AccountServiceProtocol.self, isSingleton: true) { _ in
-            return AccountService()
+            AccountService()
         }
 
         container.register(service: PersistenceService.self, isSingleton: true) { _ in
-            return PersistenceService()
+            PersistenceService()
         }
 
         container.register(service: InterruptionResolverFactoryProtocol.self) { _ in
-            return InterruptionResolverFactory()
+            InterruptionResolverFactory()
         }
 
         container.register(service: PlistConfigFactory.self) { _ in
-            return PlistConfigFactory()
+            PlistConfigFactory()
         }
 
         container.register(service: GigyaWebBridge<T>.self) { resolver in
@@ -196,7 +197,7 @@ final class GigyaIOCContainer<T: GigyaAccountProtocol>: GigyaContainerProtocol {
         }
 
         container.register(service: IOCContainer.self) { [weak self] _ in
-            return self!.container
+            self!.container
         }
 
         container.register(service: BusinessApiDelegate.self) { resolver in
@@ -206,3 +207,4 @@ final class GigyaIOCContainer<T: GigyaAccountProtocol>: GigyaContainerProtocol {
         }
     }
 }
+

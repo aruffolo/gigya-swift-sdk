@@ -9,7 +9,9 @@
 import UIKit
 
 protocol SessionVerificationServiceProtocol {
-    init(config: GigyaConfig, apiService: ApiServiceProtocol, sessionService: SessionServiceProtocol, businessApi: BusinessApiService)
+    init(config: GigyaConfig, apiService: ApiServiceProtocol, sessionService: SessionServiceProtocol, businessApi: BusinessApiService?)
+
+    func setBusinessApi(businessApi: BusinessApiService)
 
     func registerAppStateEvents()
 
@@ -17,21 +19,26 @@ protocol SessionVerificationServiceProtocol {
 }
 
 class SessionVerificationService: SessionVerificationServiceProtocol {
-
     private let config: GigyaConfig
 
     let apiService: ApiServiceProtocol
 
     let sessionService: SessionServiceProtocol
 
-    let businessApi: BusinessApiService
+    var businessApi: BusinessApiService!
 
     private var sessionLifeCountdownTimer: Timer?
 
-    required init(config: GigyaConfig, apiService: ApiServiceProtocol, sessionService: SessionServiceProtocol, businessApi: BusinessApiService) {
+    required init(config: GigyaConfig, apiService: ApiServiceProtocol, sessionService: SessionServiceProtocol, businessApi: BusinessApiService?) {
         self.config = config
         self.apiService = apiService
         self.sessionService = sessionService
+        if let businessApi = businessApi {
+            self.businessApi = businessApi
+        }
+    }
+
+    func setBusinessApi(businessApi: BusinessApiService) {
         self.businessApi = businessApi
     }
 
@@ -76,16 +83,16 @@ class SessionVerificationService: SessionVerificationServiceProtocol {
     }
 
     func start(with timeInterval: Double) {
-        sessionLifeCountdownTimer = Timer.scheduledTimer(withTimeInterval: timeInterval, repeats: true, block: { [weak self] (timer) in
+        sessionLifeCountdownTimer = Timer.scheduledTimer(withTimeInterval: timeInterval, repeats: true, block: { [weak self] _ in
             guard let self = self else { return }
 
             let reqModel = ApiRequestModel(method: GigyaDefinitions.API.verifyLogin, params: ["include": "identities-all,loginIDs,profile,email,data"], isAnonymous: true)
 
-            self.apiService.send(model: reqModel, responseType: GigyaDictionary.self, completion: { (result) in
+            self.apiService.send(model: reqModel, responseType: GigyaDictionary.self, completion: { result in
                 switch result {
                 case .success:
                     GigyaLogger.log(with: self, message: "verifyLogin success")
-                case .failure(let error):
+                case let .failure(error):
                     self.evaluateVerifyLoginError(error)
                 }
             })
@@ -97,7 +104,7 @@ class SessionVerificationService: SessionVerificationServiceProtocol {
     }
 
     private func evaluateVerifyLoginError(_ error: NetworkError) {
-        if case .gigyaError(let errorData) = error {
+        if case let .gigyaError(errorData) = error {
             GigyaLogger.log(with: self, message: "evaluateVerifyLoginError: error = \(errorData.errorCode) session invalid -> invalidate & notify")
 
             notifyInvalidSession(errorData: errorData)
