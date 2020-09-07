@@ -43,6 +43,10 @@ final class GigyaIOCContainer<T: GigyaAccountProtocol>: GigyaContainerProtocol {
                                               businessApi: nil)
         }
 
+        container.register(service: PersistenceService.self, isSingleton: true) { _ in
+            PersistenceService()
+        }
+
         container.register(service: PushNotificationsServiceProtocol.self, isSingleton: true) { resolver in
             let apiService = resolver.resolve(ApiServiceProtocol.self)
             let sessionService = resolver.resolve(SessionServiceProtocol.self)
@@ -88,6 +92,10 @@ final class GigyaIOCContainer<T: GigyaAccountProtocol>: GigyaContainerProtocol {
             return ApiService(with: resolver.resolve(NetworkAdapterProtocol.self)!, session: sessionService!)
         }
 
+        container.register(service: PlistConfigFactory.self) { _ in
+            PlistConfigFactory()
+        }
+
         container.register(service: KeychainStorageFactory.self) { resolver in
             let plistFactory = resolver.resolve(PlistConfigFactory.self)
 
@@ -126,6 +134,10 @@ final class GigyaIOCContainer<T: GigyaAccountProtocol>: GigyaContainerProtocol {
             return SocialProvidersManager(sessionService: sessionService!, config: config!, persistenceService: persistenceService!, networkAdapter: networkAdapter!)
         }
 
+        container.register(service: InterruptionResolverFactoryProtocol.self) { _ in
+            InterruptionResolverFactory()
+        }
+
         container.register(service: BusinessApiServiceProtocol.self, isSingleton: true) { resolver in
             let config = resolver.resolve(GigyaConfig.self)
             let apiService = resolver.resolve(ApiServiceProtocol.self)
@@ -151,18 +163,6 @@ final class GigyaIOCContainer<T: GigyaAccountProtocol>: GigyaContainerProtocol {
 
         container.register(service: AccountServiceProtocol.self, isSingleton: true) { _ in
             AccountService()
-        }
-
-        container.register(service: PersistenceService.self, isSingleton: true) { _ in
-            PersistenceService()
-        }
-
-        container.register(service: InterruptionResolverFactoryProtocol.self) { _ in
-            InterruptionResolverFactory()
-        }
-
-        container.register(service: PlistConfigFactory.self) { _ in
-            PlistConfigFactory()
         }
 
         container.register(service: GigyaWebBridge<T>.self) { resolver in
