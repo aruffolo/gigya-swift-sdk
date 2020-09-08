@@ -25,7 +25,7 @@ class SessionVerificationService: SessionVerificationServiceProtocol {
 
     let sessionService: SessionServiceProtocol
 
-    var businessApi: BusinessApiService!
+    var businessApi: BusinessApiService
 
     private var sessionLifeCountdownTimer: Timer?
 
@@ -117,8 +117,10 @@ class SessionVerificationService: SessionVerificationServiceProtocol {
         // stop timer
         stop()
 
-        // do logout
-        businessApi.logout { _ in }
+        if businessApi != nil {
+            // do logout
+            businessApi.logout { _ in }
+        }
 
         // send message to the host
         NotificationCenter.default.post(name: .didInvalidateSession, object: nil, userInfo: errorData.toDictionary())
