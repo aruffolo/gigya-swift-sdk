@@ -39,6 +39,7 @@ public final class GigyaCore<T: GigyaAccountProtocol>: GigyaInstanceProtocol {
     private lazy var pushService: PushNotificationsServiceProtocol = {
         return self.container.resolve(PushNotificationsServiceProtocol.self)!
     }()
+    private let lockQueue = DispatchQueue(label: "gigyacore.lock.queue")
 
     private let container: IOCContainer
 
@@ -87,10 +88,12 @@ public final class GigyaCore<T: GigyaAccountProtocol>: GigyaInstanceProtocol {
             GigyaLogger.error(with: Gigya.self, message: "please make sure you call 'initWithApi' or add apiKey to plist file")
         }
 
-        config.apiDomain = apiDomain ?? self.defaultApiDomain
-        config.apiKey = apiKey
+        lockQueue.async {
+            self.config.apiDomain = apiDomain ?? self.defaultApiDomain
+            self.config.apiKey = apiKey
 
-        businessApiService.getSDKConfig()
+            self.businessApiService.getSDKConfig()
+        }
     }
 
     // MARK: - Anonymous API
