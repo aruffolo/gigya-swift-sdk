@@ -25,7 +25,7 @@ class SessionVerificationService: SessionVerificationServiceProtocol {
 
     let sessionService: SessionServiceProtocol
 
-    var businessApi: BusinessApiService
+    var businessApi: BusinessApiService!
 
     private var sessionLifeCountdownTimer: Timer?
 
