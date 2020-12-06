@@ -25,6 +25,8 @@ final class FlowManager<T: GigyaAccountProtocol> {
     // main result handler (for Login / Register)
     private var mainLoginClosure: MainClosure<T> = { _ in }
 
+    private var genericClosure: (GigyaApiResult<GigyaDictionary>) -> Void = { _ in }
+
     // current result to dart when using interruption
     private var engineResultHandler: FlutterResult?
 
@@ -46,6 +48,22 @@ final class FlowManager<T: GigyaAccountProtocol> {
     }
 
     private func initClosure() {
+        genericClosure = { [weak self] result in
+            guard let self = self else {
+                return
+            }
+
+            switch result {
+            case .success:
+                self.engineResultHandler?(GigyaResponseModel.successfullyResponse())
+                self.eventsClosure?(.success(screenId: self.currentScreenId ?? "", action: self.currentAction?.actionId ?? .unknown, data: nil))
+
+            case .failure(let error):
+                self.engineResultHandler?(GigyaResponseModel.failedResponse(with: error))
+                self.eventsClosure?(.error(screenId: self.currentScreenId ?? "", error: error))
+            }
+        }
+
         mainLoginClosure = { [weak self] result in
             guard let self = self else {
                 return
@@ -62,17 +80,27 @@ final class FlowManager<T: GigyaAccountProtocol> {
                 // dispose current resolver
                 self.disposeResolver()
             case .failure(let error):
+      
                 if let interrupt = error.interruption {
                     switch interrupt {
                     case .pendingRegistration(resolver: let resolver):
                         self.currentResolver = NssResolverModel<PendingRegistrationResolver<T>>(interrupt: interrupt.description, resolver: resolver)
+                    case .conflitingAccount(let resolver):
+                        self.currentResolver = NssResolverModel<LinkAccountsResolver<T>>(interrupt: interrupt.description, resolver: resolver)
                     default:
                         break
                     }
                 }
+
                 self.eventsClosure?(.error(screenId: self.currentScreenId ?? "", error: error.error))
 
-                self.engineResultHandler?(GigyaResponseModel.failedResponse(with: error.error))
+                var newError = error.error
+                if case .providerError(data: "cancelled") = error.error {
+                    newError = NetworkError.gigyaError(data: try! GigyaResponseModel.makeError(errorCode: 200001, errorMessage: "error-operation-canceled"))
+                }
+
+                self.engineResultHandler?(GigyaResponseModel.failedResponse(with: newError))
+
             }
         }
     }
@@ -83,10 +111,10 @@ final class FlowManager<T: GigyaAccountProtocol> {
     }
 
     // set the current action
-    func setCurrent(action: NssAction, response: @escaping FlutterResult) {
+    func setCurrent(action: NssAction, response: @escaping FlutterResult, expressions: [String: String] = [:]) {
         currentAction = flowFactory.create(identifier: action)
         currentAction?.delegate = self
-        currentAction?.initialize(response: response)
+        currentAction?.initialize(response: response, expressions: expressions)
     }
 
     func next(method: ApiChannelEvent, params: [String : Any]?, response: @escaping FlutterResult) {
@@ -102,6 +130,10 @@ final class FlowManager<T: GigyaAccountProtocol> {
 extension FlowManager: FlowManagerDelegate {
     func getMainLoginClosure<T: GigyaAccountProtocol>(obj: T.Type) -> MainClosure<T> {
         return self.mainLoginClosure as! MainClosure<T>
+    }
+
+    func getGenericClosure() -> ((GigyaApiResult<GigyaDictionary>) -> Void) {
+        return genericClosure
     }
 
     func getEngineResultClosure() -> FlutterResult? {

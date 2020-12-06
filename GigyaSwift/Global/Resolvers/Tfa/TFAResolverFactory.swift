@@ -19,11 +19,11 @@ public class TFAResolverFactory<A: GigyaAccountProtocol> {
         self.completionHandler = completionHandler
     }
 
-    // Does not compile for Xcode 12 and is not used
-//    public func getResolver<T: TFAResolver<A>>(for resolver: T.Type) -> T {
-//        let resolverA = T.init(businessApiDelegate: businessApiDelegate, interruption: interruption, completionHandler: completionHandler)
-//
-//        return resolverA
-//
-//    }
+    public func getResolver<T: TFAResolver<A>>(for resolver: T.Type) -> T {
+
+        let resolverA = TFAResolver<A>.init(businessApiDelegate: businessApiDelegate, interruption: interruption, completionHandler: completionHandler)
+
+        return resolverA as! T
+
+    }
 }

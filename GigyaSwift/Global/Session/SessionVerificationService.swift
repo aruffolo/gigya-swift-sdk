@@ -9,10 +9,9 @@
 import UIKit
 
 protocol SessionVerificationServiceProtocol {
-    init(config: GigyaConfig, apiService: ApiServiceProtocol, sessionService: SessionServiceProtocol, businessApi: BusinessApiService?)
+    init(config: GigyaConfig, apiService: ApiServiceProtocol, sessionService: SessionServiceProtocol, businessApi: BusinessApiServiceProtocol)
 
-    func setBusinessApi(businessApi: BusinessApiService)
-
+    func setBusinessApi(businessApi: BusinessApiServiceProtocol)
     func registerAppStateEvents()
 
     func stop()
@@ -25,17 +24,15 @@ class SessionVerificationService: SessionVerificationServiceProtocol {
 
     let sessionService: SessionServiceProtocol
 
-    var businessApi: BusinessApiService!
+    var businessApi: BusinessApiServiceProtocol
 
     private var sessionLifeCountdownTimer: Timer?
 
-    required init(config: GigyaConfig, apiService: ApiServiceProtocol, sessionService: SessionServiceProtocol, businessApi: BusinessApiService?) {
+    required init(config: GigyaConfig, apiService: ApiServiceProtocol, sessionService: SessionServiceProtocol, businessApi: BusinessApiService) {
         self.config = config
         self.apiService = apiService
         self.sessionService = sessionService
-        if let businessApi = businessApi {
-            self.businessApi = businessApi
-        }
+        self.businessApi = businessApi
     }
 
     func setBusinessApi(businessApi: BusinessApiService) {

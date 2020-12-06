@@ -36,6 +36,7 @@ final class GigyaIOCContainer<T: GigyaAccountProtocol>: GigyaContainerProtocol {
             let config = resolver.resolve(GigyaConfig.self)
             let sessionService = resolver.resolve(SessionServiceProtocol.self)
             let apiService = resolver.resolve(ApiServiceProtocol.self)
+            let busnessApi = resolver.resolve(BusinessApiServiceProtocol.self)
 
             return SessionVerificationService(config: config!,
                                               apiService: apiService!,
@@ -88,8 +89,9 @@ final class GigyaIOCContainer<T: GigyaAccountProtocol>: GigyaContainerProtocol {
 
         container.register(service: ApiServiceProtocol.self) { resolver in
             let sessionService = resolver.resolve(SessionServiceProtocol.self)
+            let persistenceService = resolver.resolve(PersistenceService.self)
 
-            return ApiService(with: resolver.resolve(NetworkAdapterProtocol.self)!, session: sessionService!)
+            return ApiService(with: resolver.resolve(NetworkAdapterProtocol.self)!, session: sessionService!, persistenceService: persistenceService!)
         }
 
         container.register(service: PlistConfigFactory.self) { _ in
