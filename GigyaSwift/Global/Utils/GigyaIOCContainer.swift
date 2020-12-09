@@ -36,12 +36,12 @@ final class GigyaIOCContainer<T: GigyaAccountProtocol>: GigyaContainerProtocol {
             let config = resolver.resolve(GigyaConfig.self)
             let sessionService = resolver.resolve(SessionServiceProtocol.self)
             let apiService = resolver.resolve(ApiServiceProtocol.self)
-            let busnessApi = resolver.resolve(BusinessApiServiceProtocol.self)
+            let busnessApi = resolver.resolve(BusinessApiService.self)
 
             return SessionVerificationService(config: config!,
                                               apiService: apiService!,
                                               sessionService: sessionService!,
-                                              businessApi: nil)
+                                              businessApi: busnessApi!)
         }
 
         container.register(service: PersistenceService.self, isSingleton: true) { _ in

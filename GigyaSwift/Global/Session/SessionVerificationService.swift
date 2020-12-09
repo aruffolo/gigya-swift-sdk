@@ -28,14 +28,14 @@ class SessionVerificationService: SessionVerificationServiceProtocol {
 
     private var sessionLifeCountdownTimer: Timer?
 
-    required init(config: GigyaConfig, apiService: ApiServiceProtocol, sessionService: SessionServiceProtocol, businessApi: BusinessApiService) {
+    required init(config: GigyaConfig, apiService: ApiServiceProtocol, sessionService: SessionServiceProtocol, businessApi: BusinessApiServiceProtocol) {
         self.config = config
         self.apiService = apiService
         self.sessionService = sessionService
         self.businessApi = businessApi
     }
 
-    func setBusinessApi(businessApi: BusinessApiService) {
+    func setBusinessApi(businessApi: BusinessApiServiceProtocol) {
         self.businessApi = businessApi
     }
 
